@@ -13,7 +13,7 @@ router = APIRouter()
 
 DbDep = Annotated[Session, Depends(get_db)]
 AdminDep = Annotated[User, Depends(require_admin)]
-CategoryDep = Annotated[Optional[LocationCategory], Query(None)]
+CategoryDep = Annotated[Optional[LocationCategory], Query()]
 FileDep = Annotated[UploadFile, File(...)]
 
 
