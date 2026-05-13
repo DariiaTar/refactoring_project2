@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/layout/Layout';
@@ -15,11 +16,13 @@ const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
+PrivateRoute.propTypes = { children: PropTypes.node.isRequired };
 
 const AdminRoute = ({ children }) => {
   const { isAdmin } = useAuth();
   return isAdmin ? children : <Navigate to="/" />;
 };
+AdminRoute.propTypes = { children: PropTypes.node.isRequired };
 
 function AppRoutes() {
   return (

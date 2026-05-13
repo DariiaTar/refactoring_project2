@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { bookingsApi, locationsApi, slotsApi, usersApi } from '../services/api';
@@ -33,7 +34,6 @@ export default function AdminPage() {
         ⚙️ Адміністрування
       </h1>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '0', marginBottom: '28px', background: '#fff', borderRadius: '12px', padding: '4px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', width: 'fit-content' }}>
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)} style={{
@@ -58,15 +58,17 @@ function LocationsTab({ locations, setLocations }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', category: 'tennis', address: '', price_per_hour: '', capacity: 10 });
-  const [uploadingId, setUploadingId] = useState(null);
-  const fileRef = useRef();
 
   const reload = () => locationsApi.getAll(undefined).then(r => setLocations(r.data));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = { ...form, price_per_hour: parseFloat(form.price_per_hour), capacity: parseInt(form.capacity) };
+      const data = {
+        ...form,
+        price_per_hour: Number.parseFloat(form.price_per_hour),
+        capacity: Number.parseInt(form.capacity, 10),
+      };
       if (editing) {
         await locationsApi.update(editing.id, data);
         toast.success('Локацію оновлено');
@@ -76,24 +78,22 @@ function LocationsTab({ locations, setLocations }) {
       }
       setShowForm(false); setEditing(null);
       reload();
-    } catch (e) { toast.error(e.response?.data?.detail || 'Помилка'); }
+    } catch (submitError) { toast.error(submitError.response?.data?.detail || 'Помилка'); }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Видалити локацію?')) return;
+    if (!globalThis.confirm('Видалити локацію?')) return;
     await locationsApi.delete(id);
     toast.success('Видалено');
     reload();
   };
 
   const handleUpload = async (locationId, file, isPrimary) => {
-    setUploadingId(locationId);
     try {
       await locationsApi.uploadImage(locationId, file, isPrimary);
       toast.success('Фото завантажено');
       reload();
-    } catch (e) { toast.error('Помилка завантаження'); }
-    finally { setUploadingId(null); }
+    } catch (uploadError) { toast.error(uploadError?.response?.data?.detail || 'Помилка завантаження'); }
   };
 
   const handleDeleteImage = async (imageId) => {
@@ -123,15 +123,20 @@ function LocationsTab({ locations, setLocations }) {
                 { name: 'capacity', label: 'Місткість', type: 'number' },
               ].map(f => (
                 <div key={f.name} style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>{f.label}</label>
-                  <input type={f.type || 'text'} value={form[f.name] || ''} required={f.required !== false}
+                  <label htmlFor={`field-${f.name}`} style={labelStyle}>{f.label}</label>
+                  <input
+                    id={`field-${f.name}`}
+                    type={f.type || 'text'}
+                    value={form[f.name] || ''}
+                    required={f.required !== false}
                     onChange={e => setForm(p => ({ ...p, [f.name]: e.target.value }))}
-                    style={inputStyle} />
+                    style={inputStyle}
+                  />
                 </div>
               ))}
               <div style={{ marginBottom: '12px' }}>
-                <label style={labelStyle}>Категорія</label>
-                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} style={inputStyle}>
+                <label htmlFor="field-category" style={labelStyle}>Категорія</label>
+                <select id="field-category" value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} style={inputStyle}>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -151,7 +156,6 @@ function LocationsTab({ locations, setLocations }) {
               <div style={{ fontWeight: 700, color: '#1a1a2e', marginBottom: '4px' }}>{loc.name}</div>
               <div style={{ color: '#888', fontSize: '13px' }}>{loc.address} · {loc.category} · {loc.price_per_hour}₴/год</div>
 
-              {/* Images */}
               <div style={{ display: 'flex', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
                 {(loc.images || []).map(img => (
                   <div key={img.id} style={{ position: 'relative' }}>
@@ -163,10 +167,15 @@ function LocationsTab({ locations, setLocations }) {
                     </button>
                   </div>
                 ))}
-                <label style={{ width: '56px', height: '44px', background: '#f0f4f8', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '20px', color: '#888' }}>
+                <label htmlFor={`upload-${loc.id}`} style={{ width: '56px', height: '44px', background: '#f0f4f8', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '20px', color: '#888' }}>
                   +
-                  <input type="file" accept="image/*" style={{ display: 'none' }}
-                    onChange={e => e.target.files[0] && handleUpload(loc.id, e.target.files[0], (loc.images || []).length === 0)} />
+                  <input
+                    id={`upload-${loc.id}`}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => e.target.files[0] && handleUpload(loc.id, e.target.files[0], (loc.images || []).length === 0)}
+                  />
                 </label>
               </div>
             </div>
@@ -181,6 +190,10 @@ function LocationsTab({ locations, setLocations }) {
     </div>
   );
 }
+LocationsTab.propTypes = {
+  locations: PropTypes.array.isRequired,
+  setLocations: PropTypes.func.isRequired,
+};
 
 // ---- SLOTS TAB ----
 function SlotsTab({ locations, slots, loadSlots, setSlots }) {
@@ -190,10 +203,10 @@ function SlotsTab({ locations, slots, loadSlots, setSlots }) {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await slotsApi.create({ location_id: parseInt(selectedLoc), start_time: form.start_time, end_time: form.end_time });
+      await slotsApi.create({ location_id: Number.parseInt(selectedLoc, 10), start_time: form.start_time, end_time: form.end_time });
       toast.success('Слот створено');
       loadSlots(selectedLoc);
-    } catch (e) { toast.error(e.response?.data?.detail || 'Помилка'); }
+    } catch (createError) { toast.error(createError.response?.data?.detail || 'Помилка'); }
   };
 
   const handleDelete = async (id) => {
@@ -201,7 +214,7 @@ function SlotsTab({ locations, slots, loadSlots, setSlots }) {
       await slotsApi.delete(id);
       toast.success('Слот видалено');
       loadSlots(selectedLoc);
-    } catch (e) { toast.error(e.response?.data?.detail || 'Не можна видалити заброньований слот'); }
+    } catch (deleteError) { toast.error(deleteError.response?.data?.detail || 'Не можна видалити заброньований слот'); }
   };
 
   const STATUS_COLORS = { available: '#4CAF50', booked: '#f44336', blocked: '#888' };
@@ -212,20 +225,20 @@ function SlotsTab({ locations, slots, loadSlots, setSlots }) {
         <h3 style={{ margin: '0 0 16px', fontWeight: 700 }}>Нові слоти</h3>
         <form onSubmit={handleCreate} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div>
-            <label style={labelStyle}>Локація</label>
-            <select value={selectedLoc} onChange={e => { setSelectedLoc(e.target.value); if (e.target.value) loadSlots(e.target.value); }}
+            <label htmlFor="slot-location" style={labelStyle}>Локація</label>
+            <select id="slot-location" value={selectedLoc} onChange={e => { setSelectedLoc(e.target.value); if (e.target.value) loadSlots(e.target.value); }}
               style={{ ...inputStyle, width: '200px' }} required>
               <option value="">Оберіть...</option>
               {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Початок</label>
-            <input type="datetime-local" value={form.start_time} onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))} style={inputStyle} required />
+            <label htmlFor="slot-start" style={labelStyle}>Початок</label>
+            <input id="slot-start" type="datetime-local" value={form.start_time} onChange={e => setForm(p => ({ ...p, start_time: e.target.value }))} style={inputStyle} required />
           </div>
           <div>
-            <label style={labelStyle}>Кінець</label>
-            <input type="datetime-local" value={form.end_time} onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))} style={inputStyle} required />
+            <label htmlFor="slot-end" style={labelStyle}>Кінець</label>
+            <input id="slot-end" type="datetime-local" value={form.end_time} onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))} style={inputStyle} required />
           </div>
           <button type="submit" style={btnRed}>+ Додати слот</button>
         </form>
@@ -254,6 +267,12 @@ function SlotsTab({ locations, slots, loadSlots, setSlots }) {
     </div>
   );
 }
+SlotsTab.propTypes = {
+  locations: PropTypes.array.isRequired,
+  slots: PropTypes.array.isRequired,
+  loadSlots: PropTypes.func.isRequired,
+  setSlots: PropTypes.func.isRequired,
+};
 
 // ---- BOOKINGS TAB ----
 function BookingsTab({ bookings, setBookings }) {
@@ -265,7 +284,6 @@ function BookingsTab({ bookings, setBookings }) {
     bookingsApi.getAll().then(r => setBookings(r.data));
   };
 
-  // Group bookings by location
   const groupedByLocation = bookings.reduce((acc, b) => {
     const locName = b.location_name || 'Невідома локація';
     if (!acc[locName]) {
@@ -281,20 +299,16 @@ function BookingsTab({ bookings, setBookings }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {Object.entries(groupedByLocation).map(([locationName, locationBookings]) => (
           <div key={locationName}>
-            {/* Location Header */}
             <h3 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 700, color: '#1a1a2e', padding: '12px 16px', background: '#f0f4f8', borderRadius: '8px', borderLeft: '4px solid #e94560' }}>
               📍 {locationName}
             </h3>
-            {/* Bookings for this location */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {locationBookings.map(b => (
                 <div key={b.id} style={cardStyle}>
-                  {/* Left Section: Booking and Customer Info */}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: '#1a1a2e', marginBottom: '8px' }}>
                       Бронювання #{b.id}
                     </div>
-                    {/* Customer Details */}
                     <div style={{ background: '#f9f9f9', padding: '10px 12px', borderRadius: '8px', marginBottom: '10px', fontSize: '13px' }}>
                       <div style={{ color: '#1a1a2e', fontWeight: 600, marginBottom: '4px' }}>
                         👤 {b.user_full_name}
@@ -305,12 +319,10 @@ function BookingsTab({ bookings, setBookings }) {
                         </div>
                       )}
                     </div>
-                    {/* Time and Price */}
                     <div style={{ color: '#888', fontSize: '13px', marginBottom: '8px' }}>
                       <div>🕐 {new Date(b.start_time).toLocaleString('uk-UA')}</div>
                       <div>💰 {b.total_price}₴</div>
                     </div>
-                    {/* Comments/Notes */}
                     {b.notes && (
                       <div style={{ background: '#fff3e0', padding: '10px 12px', borderRadius: '8px', fontSize: '13px', color: '#666', borderLeft: '3px solid #FF9800' }}>
                         <div style={{ fontWeight: 600, color: '#FF9800', marginBottom: '4px' }}>📝 Коментар:</div>
@@ -318,7 +330,6 @@ function BookingsTab({ bookings, setBookings }) {
                       </div>
                     )}
                   </div>
-                  {/* Right Section: Status and Date */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px', minWidth: '200px' }}>
                     <select value={b.status} onChange={e => handleStatus(b.id, e.target.value)}
                       style={{ ...inputStyle, width: '100%' }}>
@@ -345,11 +356,15 @@ function BookingsTab({ bookings, setBookings }) {
     </div>
   );
 }
+BookingsTab.propTypes = {
+  bookings: PropTypes.array.isRequired,
+  setBookings: PropTypes.func.isRequired,
+};
 
 // ---- USERS TAB ----
 function UsersTab({ users, setUsers }) {
   const handleDeactivate = async (id) => {
-    if (!window.confirm('Заблокувати користувача?')) return;
+    if (!globalThis.confirm('Заблокувати користувача?')) return;
     await usersApi.deactivate(id);
     toast.success('Користувача заблоковано');
     usersApi.getAll().then(r => setUsers(r.data));
@@ -381,6 +396,10 @@ function UsersTab({ users, setUsers }) {
     </div>
   );
 }
+UsersTab.propTypes = {
+  users: PropTypes.array.isRequired,
+  setUsers: PropTypes.func.isRequired,
+};
 
 // Shared styles
 const btnRed = { background: '#e94560', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' };

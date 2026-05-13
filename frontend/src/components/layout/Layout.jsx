@@ -1,13 +1,7 @@
+import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const CATEGORY_LABELS = {
-  tennis: '🎾 Теніс',
-  football: '⚽ Футбол',
-  pool: '🏊 Басейн',
-  gym: '🏋️ Тренажерний зал',
-  other: '🏟️ Інше',
-};
 
 export default function Layout({ children }) {
   const { user, logout, isAdmin, isAuthenticated } = useAuth();
@@ -80,6 +74,7 @@ export default function Layout({ children }) {
     </div>
   );
 }
+Layout.propTypes = { children: PropTypes.node.isRequired };
 
 function NavLink({ to, children, accent }) {
   return (
@@ -98,6 +93,12 @@ function NavLink({ to, children, accent }) {
     </Link>
   );
 }
+NavLink.propTypes = {
+  to: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  accent: PropTypes.bool,
+};
+NavLink.defaultProps = { accent: false };
 
 const outlineBtn = {
   background: 'transparent',

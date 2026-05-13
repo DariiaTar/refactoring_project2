@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { format, isBefore, isSameDay, isToday } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
@@ -52,6 +53,9 @@ export default function LocationDetailPage() {
 
   const images = location.images || [];
 
+  const CATEGORY_ICONS = { tennis: '🎾', football: '⚽', pool: '🏊', gym: '🏋️' };
+  const categoryIcon = CATEGORY_ICONS[location.category] || '🏋️';
+
   return (
     <div>
       <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e94560', fontWeight: 700, fontSize: '14px', marginBottom: '20px', padding: 0 }}>
@@ -68,17 +72,24 @@ export default function LocationDetailPage() {
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '80px' }}>
-                {location.category === 'tennis' ? '🎾' : location.category === 'football' ? '⚽' : location.category === 'pool' ? '🏊' : '🏋️'}
+                {categoryIcon}
               </div>
             )}
           </div>
           {images.length > 1 && (
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
               {images.map((img, i) => (
-                <img key={img.id} src={`http://localhost:8000${img.image_url}`} alt=""
+                <button
+                  key={img.id}
                   onClick={() => setActiveImage(i)}
-                  style={{ width: '72px', height: '56px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer',
-                    border: i === activeImage ? '3px solid #e94560' : '3px solid transparent' }} />
+                  style={{ cursor: 'pointer', border: i === activeImage ? '3px solid #e94560' : '3px solid transparent', padding: 0, background: 'none', borderRadius: '8px' }}
+                >
+                  <img
+                    src={`http://localhost:8000${img.image_url}`}
+                    alt={`Gallery image ${i + 1}`}
+                    style={{ width: '72px', height: '56px', objectFit: 'cover', borderRadius: '6px', display: 'block' }}
+                  />
+                </button>
               ))}
             </div>
           )}
@@ -199,6 +210,10 @@ function InfoChip({ label, value }) {
     </div>
   );
 }
+InfoChip.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+};
 
 function DatePickerCalendar({ selectedDate, onDateSelect, onClose }) {
   const [viewMonth, setViewMonth] = useState(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
@@ -334,6 +349,7 @@ function DatePickerCalendar({ selectedDate, onDateSelect, onClose }) {
 
       {/* Close Button */}
       <button
+        type="button"
         onClick={onClose}
         style={{
           width: '100%',
@@ -353,3 +369,8 @@ function DatePickerCalendar({ selectedDate, onDateSelect, onClose }) {
     </div>
   );
 }
+DatePickerCalendar.propTypes = {
+  selectedDate: PropTypes.instanceOf(Date).isRequired,
+  onDateSelect: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};

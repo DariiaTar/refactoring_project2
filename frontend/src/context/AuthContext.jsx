@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { authApi } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -8,7 +9,6 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [loading, setLoading] = useState(false);
 
   const login = async (email, password) => {
     const res = await authApi.login({ email, password });
@@ -37,12 +37,19 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.role === 'admin';
   const isAuthenticated = !!user;
 
+  const value = useMemo(
+    () => ({ user, login, register, logout, isAdmin, isAuthenticated }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, isAdmin, isAuthenticated]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAdmin, isAuthenticated, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
+AuthProvider.propTypes = { children: PropTypes.node.isRequired };
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);

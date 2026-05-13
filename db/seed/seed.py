@@ -6,11 +6,14 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
 from src.config.database import SessionLocal, engine
-from src.models import *
 from src.config.database import Base
+from src.models.user import User, UserRole
+from src.models.location import Location, LocationCategory, LocationImage
+from src.models.slot import Slot, SlotStatus
+from src.models.booking import Booking
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -60,7 +63,7 @@ for data in locations_data:
 db.commit()
 
 # Слоти на наступні 7 днів
-now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+now = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 for loc in locations:
     for day in range(7):
         for hour in [9, 11, 13, 15, 17, 19]:
@@ -72,5 +75,5 @@ for loc in locations:
 db.commit()
 db.close()
 print("✅ Seed завершено успішно!")
-print(f"   Admin: admin@sportbook.ua / admin123")
-print(f"   User:  ivan@example.com / user123")
+print("   Admin: admin@sportbook.ua / admin123")
+print("   User:  ivan@example.com / user123")

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
@@ -72,7 +73,7 @@ export default function BookingDetailPage() {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Скасувати бронювання?')) return;
+    if (!globalThis.confirm('Скасувати бронювання?')) return;
     setCancelling(true);
     try {
       await bookingsApi.cancel(id);
@@ -151,7 +152,7 @@ export default function BookingDetailPage() {
           />
           <InfoRow
             label="Статус оплати"
-            value={isPending ? 'Не оплачено' : isCancelled ? 'Скасовано' : 'Оплачено'}
+            value={getPaymentStatus(isPending, isCancelled)}
           />
         </Section>
 
@@ -244,6 +245,12 @@ export default function BookingDetailPage() {
   );
 }
 
+function getPaymentStatus(isPending, isCancelled) {
+  if (isPending) return 'Не оплачено';
+  if (isCancelled) return 'Скасовано';
+  return 'Оплачено';
+}
+
 function Section({ title, children }) {
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -257,6 +264,10 @@ function Section({ title, children }) {
     </div>
   );
 }
+Section.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 function InfoRow({ label, value }) {
   return (
@@ -266,6 +277,10 @@ function InfoRow({ label, value }) {
     </div>
   );
 }
+InfoRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+};
 
 const card = {
   background: '#fff', borderRadius: '16px', padding: '24px 28px',
