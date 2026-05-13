@@ -86,7 +86,7 @@ export default function LocationDetailPage() {
                 >
                   <img
                     src={`http://localhost:8000${img.image_url}`}
-                    alt={`Gallery image ${i + 1}`}
+                    alt={`${location.name} ${i + 1}`}
                     style={{ width: '72px', height: '56px', objectFit: 'cover', borderRadius: '6px', display: 'block' }}
                   />
                 </button>
@@ -315,8 +315,9 @@ function DatePickerCalendar({ selectedDate, onDateSelect, onClose }) {
       {/* Calendar Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
         {days.map((day, i) => {
+          const monthKey = `${viewMonth.getFullYear()}-${viewMonth.getMonth()}`;
           if (day === null) {
-            return <div key={`empty-${i}`} />;
+            return <div key={`empty-${monthKey}-${i}`} />;
           }
 
           const date = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
@@ -324,16 +325,27 @@ function DatePickerCalendar({ selectedDate, onDateSelect, onClose }) {
           const isDisabled = isBefore(date, today);
           const isTodayDate = isToday(date);
 
+          const getDayBackground = () => {
+            if (isSelected) return '#e94560';
+            if (isTodayDate) return '#fff3cd';
+            return '#fff';
+          };
+          const getDayColor = () => {
+            if (isSelected) return '#fff';
+            if (isDisabled) return '#ddd';
+            return '#1a1a2e';
+          };
+
           return (
             <button
-              key={day}
+              key={`${monthKey}-${day}`}
               onClick={() => !isDisabled && onDateSelect(date)}
               style={{
                 padding: '8px 4px',
                 border: isSelected ? '2px solid #e94560' : '1px solid #f0f4f8',
                 borderRadius: '8px',
-                background: isSelected ? '#e94560' : isTodayDate ? '#fff3cd' : '#fff',
-                color: isSelected ? '#fff' : isDisabled ? '#ddd' : '#1a1a2e',
+                background: getDayBackground(),
+                color: getDayColor(),
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 fontWeight: isSelected || isTodayDate ? 700 : 600,
                 fontSize: '12px',

@@ -26,7 +26,7 @@ export default function MyBookingsPage() {
   useEffect(load, []);
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Скасувати бронювання?')) return;
+    if (!globalThis.confirm('Скасувати бронювання?')) return;
     try {
       await bookingsApi.cancel(id);
       toast.success('Бронювання скасовано');

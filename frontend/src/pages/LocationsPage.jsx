@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { locationsApi } from '../services/api';
@@ -48,11 +49,13 @@ export default function LocationsPage() {
         ))}
       </div>
 
-      {loading ? (
+      {loading && (
         <div style={{ textAlign: 'center', padding: '48px', color: '#888' }}>Завантаження...</div>
-      ) : locations.length === 0 ? (
+      )}
+      {!loading && locations.length === 0 && (
         <div style={{ textAlign: 'center', padding: '48px', color: '#888' }}>Локацій не знайдено</div>
-      ) : (
+      )}
+      {!loading && locations.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {locations.map(loc => (
             <LocationCard key={loc.id} location={loc} />
@@ -63,9 +66,12 @@ export default function LocationsPage() {
   );
 }
 
+const CATEGORY_ICONS = { tennis: '🎾', football: '⚽', pool: '🏊', gym: '🏋️', other: '🏟️' };
+
 function LocationCard({ location }) {
   const primaryImage = location.images?.find(i => i.is_primary) || location.images?.[0];
   const color = STATUS_COLORS[location.category] || '#888';
+  const categoryIcon = CATEGORY_ICONS[location.category] || '🏟️';
 
   return (
     <Link to={`/locations/${location.id}`} style={{ textDecoration: 'none' }}>
@@ -83,7 +89,7 @@ function LocationCard({ location }) {
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '48px' }}>
-              {location.category === 'tennis' ? '🎾' : location.category === 'football' ? '⚽' : location.category === 'pool' ? '🏊' : location.category === 'gym' ? '🏋️' : '🏟️'}
+              {categoryIcon}
             </div>
           )}
           <div style={{
@@ -112,3 +118,14 @@ function LocationCard({ location }) {
     </Link>
   );
 }
+LocationCard.propTypes = {
+  location: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    address: PropTypes.string.isRequired,
+    category: PropTypes.string.isRequired,
+    price_per_hour: PropTypes.number.isRequired,
+    capacity: PropTypes.number.isRequired,
+    images: PropTypes.array,
+  }).isRequired,
+};

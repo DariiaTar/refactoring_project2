@@ -168,7 +168,7 @@ function LocationsTab({ locations, setLocations }) {
                   </div>
                 ))}
                 <label htmlFor={`upload-${loc.id}`} style={{ width: '56px', height: '44px', background: '#f0f4f8', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '20px', color: '#888' }}>
-                  +
+                  <span>+</span>
                   <input
                     id={`upload-${loc.id}`}
                     type="file"

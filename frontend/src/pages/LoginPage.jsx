@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -61,6 +62,21 @@ function AuthForm({ title, fields, submitLabel, onSubmit, footer }) {
     </div>
   );
 }
+
+AuthForm.propTypes = {
+  title: PropTypes.string.isRequired,
+  fields: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    type: PropTypes.string,
+    placeholder: PropTypes.string,
+    pattern: PropTypes.string,
+    required: PropTypes.bool,
+  })).isRequired,
+  submitLabel: PropTypes.string.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  footer: PropTypes.node.isRequired,
+};
 
 export function LoginPage() {
   const { login } = useAuth();
