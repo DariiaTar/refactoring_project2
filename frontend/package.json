@@ -18,7 +18,10 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": ["react-app"]
+    "extends": ["react-app"],
+    "env": {
+      "es2020": true
+    }
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],
