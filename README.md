@@ -14,19 +14,42 @@
 
 ---
 
+## Якість коду (SonarCloud)
+
+| Метрика | Значення |
+|---------|----------|
+| Тести | **352** (344 unit + 8 integration) |
+| Покриття | **≥ 80%** |
+| Bugs | **0** |
+| Code Smells | **A** |
+| Duplications | **< 3%** |
+
+Повний звіт: [SonarCloud Dashboard](https://sonarcloud.io/summary/new_code?id=dariiatar_refactoring_project2)
+
+---
+
 ## Архітектура
 
-Layered (шарова) архітектура:
+Layered (шарова) архітектура зі строгим напрямком залежностей:
 
 ```
-src/
-├── controllers/   HTTP handlers — приймають запит, повертають відповідь
-├── services/      Бізнес-логіка — валідація, правила домену
-├── repositories/  Data access (Repository Pattern) — тільки SQL
-├── models/        SQLAlchemy ORM моделі
-├── dto/           Pydantic схеми — вхідні/вихідні дані
-└── config/        БД, налаштування, залежності (DI)
+[HTTP Request]
+      ↓
+[Controllers]  — приймають запит, повертають відповідь
+      ↓
+[Services]     — бізнес-логіка, GoF патерни (Strategy, Observer)
+      ↓
+[Repositories] — абстракції (Interface) + SQL/In-Memory реалізації
+      ↓
+[Models]       — SQLAlchemy ORM, сутності домену
 ```
+
+Принципи SOLID:
+- **S** — кожен клас має одну відповідальність
+- **O** — нова поведінка через Strategy/Observer injection
+- **L** — InMemory репозиторії є drop-in заміною SQL
+- **I** — ABC інтерфейси дрібні й сфокусовані
+- **D** — сервіси залежать від `IRepository`, не від конкретних класів
 
 ## Ролі користувачів
 
@@ -116,18 +139,21 @@ npm start
 ## Запуск тестів
 
 ```bash
-# Всі тести
+# Всі тести (352 total: 344 unit + 8 integration)
 pytest
 
-# Тільки юніт-тести (344 тести)
+# Тільки юніт-тести
 pytest tests/unit/ -v
 
-# Тільки інтеграційні (3 сценарії)
+# Тільки інтеграційні
 pytest tests/integration/ -v
 
-# З покриттям коду
-pytest tests/unit/ --cov=src --cov-report=html
-# Звіт: htmlcov/index.html
+# З покриттям коду (HTML + XML для SonarCloud)
+SECRET_KEY=test-secret-key pytest tests/unit/ \
+  --cov=src --cov-report=html:htmlcov \
+  --cov-report=xml:coverage.xml \
+  --junitxml=junit.xml
+# HTML звіт: htmlcov/index.html
 ```
 
 ---
@@ -191,10 +217,15 @@ git push origin feature/booking-payment
 # 4. Після мержу в main — CI автоматично білдить Docker образи
 ```
 
-### Захист гілок (налаштувати у GitHub)
+### Захист гілок (Branch Protection)
 
-- `main`: вимагає 1 ревʼю + пройдений CI перед мержем
-- `develop`: вимагає пройдений CI
+Налаштовано у **GitHub → Settings → Branches → Add rule** для `main`:
+- ✅ Require status checks to pass before merging
+  - `Unit Tests (Backend)`, `Integration Tests (Backend)`, `Code Style (flake8)`, `Frontend Build`
+- ✅ Require branches to be up to date before merging
+- ✅ Do not allow bypassing the above settings
+
+Merge заблоковано, якщо CI "червоний" або Quality Gate провалено.
 
 ### Іменування комітів
 
@@ -293,6 +324,39 @@ docker compose down -v
 
 ---
 
+## Бізнес-логіка та алгоритми
+
+### Алгоритми розрахунку ціни (GoF Strategy)
+
+| Стратегія | Умова | Розрахунок |
+|-----------|-------|-----------|
+| `StandardPricingStrategy` | За замовчуванням | `ціна/год × кількість годин` |
+| `PeakHourPricingStrategy` | Початок бронювання 18:00–22:00 | `базова × 1.25` (+25%) |
+| `WeekendPricingStrategy` | Субота або неділя | `базова × 1.50` (+50%) |
+
+Стратегія переключається через `DynamicPricingContext.set_strategy()` без зміни коду сервісу.
+
+### Lifecycle бронювання
+
+```
+[Слот: AVAILABLE]
+       ↓ create_booking()
+[Booking: PENDING_PAYMENT] ← слот стає BOOKED
+       ↓ pay_booking()            ↓ cancel_booking()
+[Booking: CONFIRMED]      [Booking: CANCELLED] → слот знову AVAILABLE
+```
+
+### Сповіщення про події (GoF Observer)
+
+`BookingNotifier` сповіщує всіх підписників (`LoggingObserver`, `EmailNotificationObserver`) при:
+- `on_booking_created` — бронювання створено
+- `on_booking_confirmed` — оплачено
+- `on_booking_cancelled` — скасовано
+
+Нові спостерігачі підключаються через `BookingService.add_observer()` без зміни логіки.
+
+---
+
 ## Design Patterns
 
 | Патерн | Реалізація |
@@ -311,29 +375,53 @@ docker compose down -v
 ```
 sport-booking/
 ├── src/
-│   ├── controllers/        HTTP handlers (FastAPI routers)
-│   ├── services/           Бізнес-логіка
-│   ├── repositories/       SQL запити (Repository pattern)
-│   ├── models/             SQLAlchemy ORM
-│   ├── dto/                Pydantic схеми
-│   ├── config/             database.py, settings.py, dependencies.py
-│   └── main.py             FastAPI app + routers
+│   ├── controllers/         HTTP handlers (FastAPI routers)
+│   ├── services/
+│   │   ├── booking_service.py      Бізнес-логіка бронювань
+│   │   ├── pricing_strategy.py     GoF Strategy: 3 цінових стратегії
+│   │   ├── booking_observer.py     GoF Observer: сповіщення про події
+│   │   ├── auth_service.py         JWT автентифікація
+│   │   └── location_service.py     Управління локаціями
+│   ├── repositories/
+│   │   ├── interfaces.py           ABC: IUserRepo, ILocationRepo, ISlotRepo, IBookingRepo
+│   │   ├── in_memory.py            In-Memory реалізації для тестів
+│   │   ├── user_repository.py      SQL реалізація
+│   │   ├── location_repository.py
+│   │   ├── slot_repository.py
+│   │   └── booking_repository.py
+│   ├── models/              SQLAlchemy ORM (User, Location, Slot, Booking)
+│   ├── dto/                 Pydantic схеми вхід/вихід
+│   ├── config/              database.py, settings.py (Singleton), dependencies.py
+│   └── main.py              FastAPI app + CORS + routers
 ├── tests/
-│   ├── unit/               67 юніт-тестів (mock-based)
-│   └── integration/        3 сценарії (TestClient + SQLite)
-├── db/
-│   ├── migrations/         Alembic міграції
-│   └── seed/               Тестові дані
-├── frontend/               React 18 SPA
-│   ├── src/pages/          Сторінки (MyBookings, Admin, BookingDetail...)
-│   ├── src/services/api.js Axios клієнт
-│   ├── Dockerfile          Multi-stage: node → nginx
-│   └── nginx.conf          Proxy /api → backend
+│   ├── unit/                344 юніт-тести (mock-based + in-memory)
+│   │   ├── test_booking_service.py
+│   │   ├── test_pricing_strategy.py   GoF Strategy тести (50+)
+│   │   ├── test_observer.py           GoF Observer тести (45+)
+│   │   ├── test_in_memory_repositories.py  In-Memory тести (70+)
+│   │   ├── test_repositories.py       Mock DB тести
+│   │   ├── test_auth_service.py
+│   │   ├── test_location_service.py
+│   │   ├── test_models.py
+│   │   ├── test_dto_validation.py
+│   │   └── test_price_calculation.py
+│   └── integration/         8 інтеграційних тестів (TestClient + SQLite)
+├── docs/
+│   ├── diagrams/            UML діаграми (Mermaid)
+│   │   ├── use_case.md
+│   │   ├── domain_model.md
+│   │   └── class_diagram.md
+│   └── spec/api_spec.md     REST API специфікація
+├── .cursor/rules/           AI контекст для Cursor/Claude
+│   ├── architecture.md
+│   └── testing_strategy.md
 ├── .github/workflows/
-│   └── ci.yml              GitHub Actions CI/CD
-├── Dockerfile              Backend image
-├── docker-compose.yml      Multi-container setup
-├── .env.example            Шаблон змінних середовища
-├── .dockerignore           Виключення для Docker context
-└── requirements.txt        Python залежності
+│   └── ci.yml               GitHub Actions: test → lint → sonar → docker
+├── .cursorrules             Глобальні правила для AI-агентів
+├── sonar-project.properties SonarCloud конфігурація
+├── .coveragerc              Coverage.py налаштування (relative_files)
+├── Dockerfile               Backend image
+├── docker-compose.yml       Multi-container setup
+├── .env.example             Шаблон змінних середовища
+└── requirements.txt         Python залежності
 ```
