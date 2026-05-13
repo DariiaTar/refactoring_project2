@@ -40,10 +40,10 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          python -m coverage run --source=src -m pytest tests/unit/ -v --tb=short --junitxml=junit.xml
-          python -m coverage xml -o coverage.xml
-          python -m coverage html -d htmlcov
-          python -m coverage report --show-missing
+          pytest tests/unit/ -v --tb=short \
+            --cov=src --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov --cov-report=term-missing \
+            --junitxml=junit.xml
         env:
           SECRET_KEY: test-secret-key
 
@@ -164,13 +164,19 @@ jobs:
 
       - name: Run tests and generate coverage for SonarCloud
         run: |
-          python -m coverage run --source=src -m pytest tests/unit/ -v --junitxml=junit.xml
-          python -m coverage xml -o coverage.xml
+          pytest tests/unit/ -v --tb=short \
+            --cov=src --cov-report=xml:coverage.xml \
+            --junitxml=junit.xml
         env:
           SECRET_KEY: test-secret-key
 
-      - name: Verify coverage file exists
-        run: ls -la coverage.xml && head -5 coverage.xml
+      - name: Verify coverage file
+        run: |
+          ls -la coverage.xml
+          echo "=== Source element ==="
+          grep '<source>' coverage.xml || echo "no source tag"
+          echo "=== First 3 filenames ==="
+          grep 'filename=' coverage.xml | head -3
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
