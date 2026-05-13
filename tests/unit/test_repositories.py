@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 from src.repositories.user_repository import UserRepository
 from src.repositories.location_repository import LocationRepository
-from src.repositories.booking_repository import BookingRepository, SlotRepository
+from src.repositories.booking_repository import BookingRepository
+from src.repositories.slot_repository import SlotRepository
 from src.models.user import User
 from src.models.location import Location, LocationCategory, LocationImage
 from src.models.booking import Booking, BookingStatus

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, Text
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -36,11 +36,9 @@ class LocationImage(Base):
     __tablename__ = "location_images"
 
     id = Column(Integer, primary_key=True, index=True)
-    location_id = Column(Integer, nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     image_url = Column(String, nullable=False)
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    from sqlalchemy import ForeignKey
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     location = relationship("Location", back_populates="images")

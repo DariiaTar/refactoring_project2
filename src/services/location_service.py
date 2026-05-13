@@ -53,7 +53,12 @@ class LocationService:
         if len(content) > MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail="Файл перевищує 5MB")
 
-        ext = file.filename.split(".")[-1]
+        content_type_to_ext = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp",
+        }
+        ext = content_type_to_ext.get(file.content_type, "jpg")
         filename = f"{uuid.uuid4()}.{ext}"
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         filepath = os.path.join(UPLOAD_DIR, filename)

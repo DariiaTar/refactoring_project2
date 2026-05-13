@@ -14,6 +14,11 @@ from src.dto.booking_dto import (
 from src.services.pricing_strategy import IPricingStrategy, DynamicPricingContext
 from src.services.booking_observer import IBookingObserver, BookingNotifier
 
+_ERR_SLOT_NOT_FOUND = "Слот не знайдено"
+_ERR_BOOKING_NOT_FOUND = "Бронювання не знайдено"
+_ERR_LOCATION_NOT_FOUND = "Локацію не знайдено"
+_ERR_ACCESS_DENIED = "Доступ заборонено"
+
 
 class SlotService:
     def __init__(self, db: Session):
@@ -31,14 +36,14 @@ class SlotService:
     def create(self, data: SlotCreateDTO) -> SlotResponseDTO:
         location = self.location_repo.get_by_id(data.location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Локацію не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_LOCATION_NOT_FOUND)
         slot = self.slot_repo.create(data.location_id, data.start_time, data.end_time)
         return SlotResponseDTO.from_orm(slot)
 
     def delete(self, slot_id: int) -> None:
         slot = self.slot_repo.get_by_id(slot_id)
         if not slot:
-            raise HTTPException(status_code=404, detail="Слот не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_SLOT_NOT_FOUND)
         if slot.status == SlotStatus.BOOKED:
             raise HTTPException(status_code=400, detail="Не можна видалити заброньований слот")
         self.slot_repo.delete(slot)
@@ -71,7 +76,7 @@ class BookingService:
     def create_booking(self, user_id: int, data: BookingCreateDTO) -> BookingResponseDTO:
         slot = self.slot_repo.get_by_id(data.slot_id)
         if not slot:
-            raise HTTPException(status_code=404, detail="Слот не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_SLOT_NOT_FOUND)
         if slot.status != SlotStatus.AVAILABLE:
             raise HTTPException(status_code=400, detail="Слот вже заброньований")
 
@@ -125,12 +130,14 @@ class BookingService:
             admin_bookings.append(admin_booking)
         return admin_bookings
 
-    def get_booking(self, booking_id: int, user_id: int = None, is_admin: bool = False) -> BookingDetailsResponseDTO:
+    def get_booking(  # noqa: E501
+        self, booking_id: int, user_id: Optional[int] = None, is_admin: bool = False
+    ) -> BookingDetailsResponseDTO:
         booking = self.booking_repo.get_by_id(booking_id)
         if not booking:
-            raise HTTPException(status_code=404, detail="Бронювання не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_BOOKING_NOT_FOUND)
         if not is_admin and booking.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Доступ заборонено")
+            raise HTTPException(status_code=403, detail=_ERR_ACCESS_DENIED)
 
         location = self.location_repo.get_by_id(booking.slot.location_id)
         return BookingDetailsResponseDTO(
@@ -153,12 +160,14 @@ class BookingService:
             end_time=booking.slot.end_time,
         )
 
-    def pay_booking(self, booking_id: int, user_id: int = None, is_admin: bool = False) -> BookingDetailsResponseDTO:
+    def pay_booking(  # noqa: E501
+        self, booking_id: int, user_id: Optional[int] = None, is_admin: bool = False
+    ) -> BookingDetailsResponseDTO:
         booking = self.booking_repo.get_by_id(booking_id)
         if not booking:
-            raise HTTPException(status_code=404, detail="Бронювання не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_BOOKING_NOT_FOUND)
         if not is_admin and booking.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Доступ заборонено")
+            raise HTTPException(status_code=403, detail=_ERR_ACCESS_DENIED)
         if booking.status != BookingStatus.PENDING_PAYMENT:
             raise HTTPException(status_code=400, detail="Бронювання не потребує оплати")
 
@@ -188,9 +197,9 @@ class BookingService:
     def cancel_booking(self, booking_id: int, user_id: int, is_admin: bool = False) -> BookingResponseDTO:
         booking = self.booking_repo.get_by_id(booking_id)
         if not booking:
-            raise HTTPException(status_code=404, detail="Бронювання не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_BOOKING_NOT_FOUND)
         if not is_admin and booking.user_id != user_id:
-            raise HTTPException(status_code=403, detail="Доступ заборонено")
+            raise HTTPException(status_code=403, detail=_ERR_ACCESS_DENIED)
         if booking.status == BookingStatus.CANCELLED:
             raise HTTPException(status_code=400, detail="Бронювання вже скасовано")
 
@@ -202,6 +211,6 @@ class BookingService:
     def update_status(self, booking_id: int, status: BookingStatus) -> BookingResponseDTO:
         booking = self.booking_repo.get_by_id(booking_id)
         if not booking:
-            raise HTTPException(status_code=404, detail="Бронювання не знайдено")
+            raise HTTPException(status_code=404, detail=_ERR_BOOKING_NOT_FOUND)
         updated = self.booking_repo.update_status(booking, status)
         return BookingResponseDTO.from_orm(updated)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -38,7 +38,6 @@ def deactivate_user(
     repo = UserRepository(db)
     user = repo.get_by_id(user_id)
     if not user:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Користувача не знайдено")
     repo.update(user, is_active=False)
     return {"message": "Користувача заблоковано"}

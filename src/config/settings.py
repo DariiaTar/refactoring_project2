@@ -1,9 +1,10 @@
 import os
+import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey-change-in-production")
+SECRET_KEY: str = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
