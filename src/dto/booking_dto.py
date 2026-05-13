@@ -41,10 +41,10 @@ class BookingResponseDTO(BaseModel):
     slot_id: int
     status: BookingStatus
     total_price: float
-    notes: Optional[str]
-    guest_name: Optional[str]
-    guest_email: Optional[str]
-    guest_phone: Optional[str]
+    notes: Optional[str] = None
+    guest_name: Optional[str] = None
+    guest_email: Optional[str] = None
+    guest_phone: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -55,20 +55,19 @@ class BookingStatusUpdateDTO(BaseModel):
     status: BookingStatus
 
 
-# Enhanced DTO for admin panel with location and user data
 class BookingAdminResponseDTO(BaseModel):
     id: int
     slot_id: int
     user_id: int
     user_full_name: str
-    user_phone: Optional[str]
+    user_phone: Optional[str] = None
     location_id: int
     location_name: str
     start_time: datetime
     end_time: datetime
     status: BookingStatus
     total_price: float
-    notes: Optional[str]
+    notes: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -80,14 +79,14 @@ class BookingDetailsResponseDTO(BaseModel):
     slot_id: int
     status: BookingStatus
     total_price: float
-    notes: Optional[str]
-    guest_name: Optional[str]
-    guest_email: Optional[str]
-    guest_phone: Optional[str]
+    notes: Optional[str] = None
+    guest_name: Optional[str] = None
+    guest_email: Optional[str] = None
+    guest_phone: Optional[str] = None
     created_at: datetime
     user_id: int
     user_full_name: str
-    user_phone: Optional[str]
+    user_phone: Optional[str] = None
     location_id: int
     location_name: str
     location_address: str

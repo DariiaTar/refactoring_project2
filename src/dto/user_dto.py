@@ -27,7 +27,7 @@ class UserRegisterDTO(BaseModel):
     def phone_format(cls, v):
         if v is None:
             return v
-        phone_pattern = r'^[+]?[0-9]{7,15}$'
+        phone_pattern = r'^[+]?\d{7,15}$'
         if not re.match(phone_pattern, v.replace(" ", "").replace("-", "")):
             raise ValueError("Телефон має містити 7-15 цифр (можна з +)")
         return v
@@ -43,7 +43,7 @@ class UserResponseDTO(BaseModel):
     email: str
     full_name: str
     role: UserRole
-    phone: Optional[str]
+    phone: Optional[str] = None
     is_active: bool
     created_at: datetime
 

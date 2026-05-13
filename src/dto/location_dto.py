@@ -47,7 +47,7 @@ class LocationUpdateDTO(BaseModel):
 class LocationResponseDTO(BaseModel):
     id: int
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
     category: LocationCategory
     address: str
     price_per_hour: float

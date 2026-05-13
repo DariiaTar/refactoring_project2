@@ -6,10 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://sportbook:sportbook@localhost:5432/sportbook"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
