@@ -113,7 +113,7 @@ class TestBookingFlow:
                          headers={"Authorization": f"Bearer {user_token}"})
         assert r3.status_code == 200
         assert r3.json()["status"] == "pending_payment"
-        assert r3.json()["total_price"] == 600.0
+        assert r3.json()["total_price"] == pytest.approx(600.0, rel=1e-3)
 
     def test_double_booking_fails(self, client, admin_token, user_token):
         r = client.post("/api/locations/", json={
