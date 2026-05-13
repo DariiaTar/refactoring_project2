@@ -173,16 +173,14 @@ jobs:
         run: ls -la coverage.xml && head -5 coverage.xml
 
       - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip -O sonar-scanner.zip
-          unzip -q sonar-scanner.zip
-          ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${SONAR_TOKEN} \
+        with:
+          args: >
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.version=3.11
 
   # ── 5. Frontend build ────────────────────────────────────────────────────
   test-frontend:
