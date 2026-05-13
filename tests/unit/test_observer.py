@@ -1,4 +1,5 @@
 """Tests for GoF Observer pattern — booking notifications."""
+import pytest
 from src.services.booking_observer import (
     IBookingObserver,
     LoggingObserver,
@@ -30,7 +31,7 @@ class TestLoggingObserver:
         assert ev["booking_id"] == 7
         assert ev["user_id"] == 8
         assert ev["slot_id"] == 9
-        assert ev["total_price"] == 150.0
+        assert ev["total_price"] == pytest.approx(150.0)
 
     def test_on_booking_cancelled_records_event(self):
         self.obs.on_booking_cancelled(5, 6)
@@ -77,7 +78,7 @@ class TestEmailNotificationObserver:
         assert notif["type"] == "booking_confirmation"
         assert notif["booking_id"] == 1
         assert notif["user_id"] == 2
-        assert notif["total_price"] == 300.0
+        assert notif["total_price"] == pytest.approx(300.0)
 
     def test_on_booking_cancelled_stores_cancellation(self):
         self.obs.on_booking_cancelled(3, 4)

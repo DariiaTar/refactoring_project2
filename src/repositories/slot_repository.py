@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from src.models.slot import Slot, SlotStatus
 
 
@@ -21,7 +21,7 @@ class SlotRepository:
         return self.db.query(Slot).filter(
             Slot.location_id == location_id,
             Slot.status == SlotStatus.AVAILABLE,
-            Slot.start_time >= datetime.utcnow()
+            Slot.start_time >= datetime.now(timezone.utc)
         ).order_by(Slot.start_time).all()
 
     def create(self, location_id: int, start_time: datetime, end_time: datetime) -> Slot:

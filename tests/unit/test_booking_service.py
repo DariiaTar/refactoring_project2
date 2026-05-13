@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from fastapi import HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.services.booking_service import BookingService, SlotService
 from src.models.slot import Slot, SlotStatus
@@ -14,8 +14,8 @@ def make_slot(status=SlotStatus.AVAILABLE, location_id=1, hours=2):
     slot = Slot()
     slot.id = 1
     slot.location_id = location_id
-    slot.start_time = datetime.utcnow() + timedelta(hours=1)
-    slot.end_time = datetime.utcnow() + timedelta(hours=1 + hours)
+    slot.start_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    slot.end_time = datetime.now(timezone.utc) + timedelta(hours=1 + hours)
     slot.status = status
     return slot
 
@@ -52,7 +52,7 @@ def make_booking(status=BookingStatus.PENDING_PAYMENT, user_id=1, total_price=60
     b.guest_name = None
     b.guest_email = None
     b.guest_phone = None
-    b.created_at = datetime.utcnow()
+    b.created_at = datetime.now(timezone.utc)
     return b
 
 
@@ -81,7 +81,7 @@ class TestCreateBooking:
 
         data = BookingCreateDTO(slot_id=1)
         result = booking_service.create_booking(1, data)
-        assert result.total_price == 600.0
+        assert result.total_price == pytest.approx(600.0)
 
     def test_slot_not_found_raises(self, booking_service):
         booking_service.slot_repo.get_by_id = MagicMock(return_value=None)
@@ -277,7 +277,7 @@ class TestSlotService:
 
     def test_create_slot_location_not_found_raises(self, slot_service):
         slot_service.location_repo.get_by_id = MagicMock(return_value=None)
-        start = datetime.utcnow() + timedelta(hours=1)
+        start = datetime.now(timezone.utc) + timedelta(hours=1)
         end = start + timedelta(hours=2)
         data = SlotCreateDTO(location_id=999, start_time=start, end_time=end)
         with pytest.raises(HTTPException) as exc:
@@ -290,7 +290,7 @@ class TestSlotService:
         slot_service.location_repo.get_by_id = MagicMock(return_value=loc)
         slot_service.slot_repo.create = MagicMock(return_value=slot)
 
-        start = datetime.utcnow() + timedelta(hours=1)
+        start = datetime.now(timezone.utc) + timedelta(hours=1)
         end = start + timedelta(hours=2)
         data = SlotCreateDTO(location_id=1, start_time=start, end_time=end)
         result = slot_service.create(data)

@@ -1,3 +1,4 @@
+import pytest
 from src.models.user import User, UserRole
 from src.models.booking import Booking, BookingStatus
 from src.models.slot import SlotStatus
@@ -89,7 +90,7 @@ class TestUserModel:
         user.id = 1
         user.email = "test@test.com"
         user.full_name = "Тест"
-        user.hashed_password = "hashed"
+        user.hashed_password = "hashed"  # NOSONAR
         user.role = UserRole.USER
         user.is_active = True
         assert user.email == "test@test.com"
@@ -110,7 +111,7 @@ class TestBookingModel:
         b.slot_id = 1
         b.total_price = 300.0
         b.status = BookingStatus.PENDING_PAYMENT
-        assert b.total_price == 300.0
+        assert b.total_price == pytest.approx(300.0)
 
     def test_booking_tablename(self):
         assert Booking.__tablename__ == "bookings"

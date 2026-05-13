@@ -39,7 +39,7 @@ def admin_token(client):
     client.post("/api/auth/register", json={
         "email": "admin@test.ua",
         "full_name": "Адмін",
-        "password": "admin123"
+        "password": "admin123"  # NOSONAR
     })
     db = TestingSessionLocal()
     from src.models.user import User, UserRole
@@ -48,7 +48,7 @@ def admin_token(client):
     db.commit()
     db.close()
 
-    resp = client.post("/api/auth/login", json={"email": "admin@test.ua", "password": "admin123"})
+    resp = client.post("/api/auth/login", json={"email": "admin@test.ua", "password": "admin123"})  # NOSONAR
     return resp.json()["access_token"]
 
 
@@ -57,9 +57,9 @@ def user_token(client):
     client.post("/api/auth/register", json={
         "email": "user@test.ua",
         "full_name": "Користувач",
-        "password": "user123"
+        "password": "user123"  # NOSONAR
     })
-    resp = client.post("/api/auth/login", json={"email": "user@test.ua", "password": "user123"})
+    resp = client.post("/api/auth/login", json={"email": "user@test.ua", "password": "user123"})  # NOSONAR
     return resp.json()["access_token"]
 
 
@@ -67,19 +67,19 @@ def user_token(client):
 class TestAuthFlow:
     def test_register_and_login(self, client):
         r = client.post("/api/auth/register", json={
-            "email": "new@test.ua", "full_name": "Новий", "password": "pass123"
+            "email": "new@test.ua", "full_name": "Новий", "password": "pass123"  # NOSONAR
         })
         assert r.status_code == 200
         assert "access_token" in r.json()
 
-        r2 = client.post("/api/auth/login", json={"email": "new@test.ua", "password": "pass123"})
+        r2 = client.post("/api/auth/login", json={"email": "new@test.ua", "password": "pass123"})  # NOSONAR
         assert r2.status_code == 200
 
     def test_login_wrong_password(self, client):
         client.post("/api/auth/register", json={
-            "email": "user2@test.ua", "full_name": "Юзер", "password": "correct"
+            "email": "user2@test.ua", "full_name": "Юзер", "password": "correct"  # NOSONAR
         })
-        r = client.post("/api/auth/login", json={"email": "user2@test.ua", "password": "wrong"})
+        r = client.post("/api/auth/login", json={"email": "user2@test.ua", "password": "wrong"})  # NOSONAR
         assert r.status_code == 401
 
     def test_me_requires_auth(self, client):
@@ -99,9 +99,9 @@ class TestBookingFlow:
         location_id = r.json()["id"]
 
         # Адмін створює слот
-        from datetime import datetime, timedelta
-        start = (datetime.utcnow() + timedelta(hours=2)).isoformat()
-        end = (datetime.utcnow() + timedelta(hours=4)).isoformat()
+        from datetime import datetime, timezone, timedelta
+        start = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+        end = (datetime.now(timezone.utc) + timedelta(hours=4)).isoformat()
         r2 = client.post("/api/slots/", json={
             "location_id": location_id, "start_time": start, "end_time": end
         }, headers={"Authorization": f"Bearer {admin_token}"})
@@ -122,9 +122,9 @@ class TestBookingFlow:
         }, headers={"Authorization": f"Bearer {admin_token}"})
         location_id = r.json()["id"]
 
-        from datetime import datetime, timedelta
-        start = (datetime.utcnow() + timedelta(hours=5)).isoformat()
-        end = (datetime.utcnow() + timedelta(hours=7)).isoformat()
+        from datetime import datetime, timezone, timedelta
+        start = (datetime.now(timezone.utc) + timedelta(hours=5)).isoformat()
+        end = (datetime.now(timezone.utc) + timedelta(hours=7)).isoformat()
         r2 = client.post("/api/slots/", json={
             "location_id": location_id, "start_time": start, "end_time": end
         }, headers={"Authorization": f"Bearer {admin_token}"})

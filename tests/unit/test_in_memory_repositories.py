@@ -1,5 +1,6 @@
 """Tests for In-Memory repository implementations."""
-from datetime import datetime, timedelta
+import pytest
+from datetime import datetime, timezone, timedelta
 
 from src.repositories.in_memory import (
     InMemoryUserRepository,
@@ -128,7 +129,7 @@ class TestInMemoryLocationRepository:
 
     def test_create_stores_price(self):
         loc = self.repo.create("Gym", LocationCategory.GYM, "vul. 3", 150.0)
-        assert loc.price_per_hour == 150.0
+        assert loc.price_per_hour == pytest.approx(150.0)
 
     def test_create_is_active_default_true(self):
         loc = self.repo.create("Gym", LocationCategory.GYM, "vul. 3", 150.0)
@@ -170,7 +171,7 @@ class TestInMemoryLocationRepository:
 class TestInMemorySlotRepository:
     def setup_method(self):
         self.repo = InMemorySlotRepository()
-        self.future = datetime.utcnow() + timedelta(hours=2)
+        self.future = datetime.now(timezone.utc) + timedelta(hours=2)
 
     def test_implements_interface(self):
         assert isinstance(self.repo, ISlotRepository)
@@ -206,7 +207,7 @@ class TestInMemorySlotRepository:
         assert result[0].start_time < result[1].start_time
 
     def test_get_by_location_with_from_date_filter(self):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         past = now - timedelta(hours=5)
         self.repo.create(1, past, past + timedelta(hours=1))
         self.repo.create(1, self.future, self.future + timedelta(hours=1))
@@ -253,7 +254,7 @@ class TestInMemoryBookingRepository:
 
     def test_create_stores_price(self):
         b = self.repo.create(1, 1, 450.0)
-        assert b.total_price == 450.0
+        assert b.total_price == pytest.approx(450.0)
 
     def test_create_stores_notes(self):
         b = self.repo.create(1, 1, 300.0, notes="Прошу не спізнюватись")

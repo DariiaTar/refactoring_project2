@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
@@ -22,7 +22,7 @@ class AuthService:
         return pwd_context.verify(plain_password, hashed_password)
 
     def create_access_token(self, user_id: int, role: str) -> str:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         data = {"sub": str(user_id), "role": role, "exp": expire}
         return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 

@@ -1,5 +1,5 @@
 from typing import Dict, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.models.user import User, UserRole
 from src.models.location import Location, LocationCategory
@@ -71,7 +71,7 @@ class InMemoryLocationRepository(ILocationRepository):
         loc.description = kwargs.get("description")
         loc.capacity = kwargs.get("capacity", 1)
         loc.is_active = kwargs.get("is_active", True)
-        loc.created_at = datetime.utcnow()
+        loc.created_at = datetime.now(timezone.utc)
         self._store[self._counter] = loc
         self._counter += 1
         return loc
@@ -101,7 +101,7 @@ class InMemorySlotRepository(ISlotRepository):
         return sorted(slots, key=lambda s: s.start_time)
 
     def get_available_by_location(self, location_id: int) -> List[Slot]:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return [
             s for s in self._store.values()
             if s.location_id == location_id
@@ -153,7 +153,7 @@ class InMemoryBookingRepository(IBookingRepository):
         booking.guest_name = kwargs.get("guest_name")
         booking.guest_email = kwargs.get("guest_email")
         booking.guest_phone = kwargs.get("guest_phone")
-        booking.created_at = datetime.utcnow()
+        booking.created_at = datetime.now(timezone.utc)
         self._store[self._counter] = booking
         self._counter += 1
         return booking

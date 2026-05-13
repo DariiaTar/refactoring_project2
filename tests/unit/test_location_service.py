@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.services.location_service import LocationService
 from src.models.location import Location, LocationCategory, LocationImage
@@ -19,8 +19,8 @@ def make_location(id=1, name="Тенісний корт", is_active=True, price=
     loc.capacity = 4
     loc.is_active = is_active
     loc.images = []
-    loc.created_at = datetime.utcnow()
-    loc.updated_at = datetime.utcnow()
+    loc.created_at = datetime.now(timezone.utc)
+    loc.updated_at = datetime.now(timezone.utc)
     return loc
 
 
@@ -30,7 +30,7 @@ def make_image(id=1, location_id=1, url="/uploads/test.jpg", is_primary=False):
     img.location_id = location_id
     img.image_url = url
     img.is_primary = is_primary
-    img.created_at = datetime.utcnow()
+    img.created_at = datetime.now(timezone.utc)
     return img
 
 
@@ -70,7 +70,7 @@ class TestGetById:
         loc = make_location(price=500.0)
         location_service.repo.get_by_id = MagicMock(return_value=loc)
         result = location_service.get_by_id(1)
-        assert result.price_per_hour == 500.0
+        assert result.price_per_hour == pytest.approx(500.0)
 
 
 class TestGetAll:
@@ -201,7 +201,7 @@ class TestUpdate:
 
         data = LocationUpdateDTO(price_per_hour=999.0)
         result = location_service.update(1, data)
-        assert result.price_per_hour == 999.0
+        assert result.price_per_hour == pytest.approx(999.0)
 
 
 class TestDelete:

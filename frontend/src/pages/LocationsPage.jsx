@@ -74,13 +74,16 @@ function LocationCard({ location }) {
   const categoryIcon = CATEGORY_ICONS[location.category] || '🏟️';
 
   return (
-    <Link to={`/locations/${location.id}`} style={{ textDecoration: 'none' }}>
+    <Link
+      to={`/locations/${location.id}`}
+      style={{ textDecoration: 'none', display: 'block' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'; }}
+    >
       <div style={{
         background: '#fff', borderRadius: '16px', overflow: 'hidden',
         boxShadow: '0 2px 12px rgba(0,0,0,0.06)', transition: 'transform 0.2s, box-shadow 0.2s',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'; }}>
+      }}>
 
         {/* Image */}
         <div style={{ height: '180px', background: primaryImage ? '#000' : '#f0f4f8', position: 'relative', overflow: 'hidden' }}>

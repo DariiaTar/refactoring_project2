@@ -13,10 +13,12 @@ router = APIRouter()
 
 DbDep = Annotated[Session, Depends(get_db)]
 AdminDep = Annotated[User, Depends(require_admin)]
+CategoryDep = Annotated[Optional[LocationCategory], Query(None)]
+FileDep = Annotated[UploadFile, File(...)]
 
 
 @router.get("/", response_model=List[LocationResponseDTO], summary="Список локацій")
-def get_locations(db: DbDep, category: Optional[LocationCategory] = Query(None)):
+def get_locations(db: DbDep, category: CategoryDep = None):
     return LocationService(db).get_all(category=category)
 
 
@@ -46,7 +48,7 @@ async def upload_image(
     location_id: int,
     db: DbDep,
     _: AdminDep,
-    file: UploadFile = File(...),
+    file: FileDep,
     is_primary: bool = False,
 ):
     return await LocationService(db).upload_image(location_id, file, is_primary)

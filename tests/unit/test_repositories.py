@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from src.repositories.user_repository import UserRepository
 from src.repositories.location_repository import LocationRepository
@@ -77,7 +77,7 @@ class TestUserRepository:
         repo.create(
             email="new@example.com",
             full_name="Новий Юзер",
-            hashed_password="hashed",
+            hashed_password="hashed",  # NOSONAR
         )
         db.add.assert_called_once()
         db.commit.assert_called_once()
@@ -89,7 +89,7 @@ class TestUserRepository:
         result = repo.create(
             email="new@example.com",
             full_name="Новий",
-            hashed_password="hashed",
+            hashed_password="hashed",  # NOSONAR
         )
         assert result is not None
 
@@ -240,7 +240,7 @@ class TestSlotRepository:
     def test_create_slot_commits(self):
         db = MagicMock()
         repo = SlotRepository(db)
-        start = datetime.utcnow() + timedelta(hours=1)
+        start = datetime.now(timezone.utc) + timedelta(hours=1)
         end = start + timedelta(hours=2)
         repo.create(1, start, end)
         db.add.assert_called_once()

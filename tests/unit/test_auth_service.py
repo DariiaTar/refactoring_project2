@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.services.auth_service import AuthService
 from src.models.user import User, UserRole
@@ -17,7 +17,7 @@ def make_user(role=UserRole.USER, is_active=True, email="test@example.com"):
     user.role = role
     user.is_active = is_active
     user.phone = None
-    user.created_at = datetime.utcnow()
+    user.created_at = datetime.now(timezone.utc)
     return user
 
 
@@ -145,13 +145,13 @@ class TestRegister:
         new_user = make_user()
         auth_service.user_repo.create = MagicMock(return_value=new_user)
 
-        data = UserRegisterDTO(email="new@example.com", full_name="Новий Юзер", password="pass123")
+        data = UserRegisterDTO(email="new@example.com", full_name="Новий Юзер", password="pass123")  # NOSONAR
         result = auth_service.register(data)
         assert result.access_token is not None
 
     def test_register_duplicate_email_raises(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=make_user())
-        data = UserRegisterDTO(email="existing@example.com", full_name="Існуючий", password="pass123")
+        data = UserRegisterDTO(email="existing@example.com", full_name="Існуючий", password="pass123")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.register(data)
         assert exc.value.status_code == 400
@@ -159,7 +159,7 @@ class TestRegister:
     def test_register_returns_token_dto(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=None)
         auth_service.user_repo.create = MagicMock(return_value=make_user())
-        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="pass123")
+        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="pass123")  # NOSONAR
         result = auth_service.register(data)
         assert hasattr(result, "access_token")
         assert hasattr(result, "user")
@@ -167,7 +167,7 @@ class TestRegister:
     def test_register_password_is_hashed(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=None)
         auth_service.user_repo.create = MagicMock(return_value=make_user())
-        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="plainpass")
+        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="plainpass")  # NOSONAR
         auth_service.register(data)
         call_kwargs = auth_service.user_repo.create.call_args[1]
         assert call_kwargs["hashed_password"] != "plainpass"
@@ -175,7 +175,7 @@ class TestRegister:
     def test_register_calls_repo_create(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=None)
         auth_service.user_repo.create = MagicMock(return_value=make_user())
-        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="pass123")
+        data = UserRegisterDTO(email="new@example.com", full_name="Новий", password="pass123")  # NOSONAR
         auth_service.register(data)
         auth_service.user_repo.create.assert_called_once()
 
@@ -185,14 +185,14 @@ class TestRegister:
         user.phone = "+380501234567"
         auth_service.user_repo.create = MagicMock(return_value=user)
         data = UserRegisterDTO(
-            email="new@example.com", full_name="Новий", password="pass123", phone="+380501234567"
+            email="new@example.com", full_name="Новий", password="pass123", phone="+380501234567"  # NOSONAR
         )
         result = auth_service.register(data)
         assert result.user.phone == "+380501234567"
 
     def test_register_error_message_contains_email(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=make_user())
-        data = UserRegisterDTO(email="dup@example.com", full_name="Юзер", password="pass123")
+        data = UserRegisterDTO(email="dup@example.com", full_name="Юзер", password="pass123")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.register(data)
         assert "email" in exc.value.detail.lower() or "існує" in exc.value.detail.lower()
@@ -204,7 +204,7 @@ class TestLogin:
         user.hashed_password = auth_service.hash_password("correct_password")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
 
-        data = UserLoginDTO(email="test@example.com", password="correct_password")
+        data = UserLoginDTO(email="test@example.com", password="correct_password")  # NOSONAR
         result = auth_service.login(data)
         assert result.access_token is not None
 
@@ -213,14 +213,14 @@ class TestLogin:
         user.hashed_password = auth_service.hash_password("correct_password")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
 
-        data = UserLoginDTO(email="test@example.com", password="wrong_password")
+        data = UserLoginDTO(email="test@example.com", password="wrong_password")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.login(data)
         assert exc.value.status_code == 401
 
     def test_login_nonexistent_user_raises(self, auth_service):
         auth_service.user_repo.get_by_email = MagicMock(return_value=None)
-        data = UserLoginDTO(email="nobody@example.com", password="pass123")
+        data = UserLoginDTO(email="nobody@example.com", password="pass123")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.login(data)
         assert exc.value.status_code == 401
@@ -230,7 +230,7 @@ class TestLogin:
         user.hashed_password = auth_service.hash_password("pass123")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
 
-        data = UserLoginDTO(email="test@example.com", password="pass123")
+        data = UserLoginDTO(email="test@example.com", password="pass123")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.login(data)
         assert exc.value.status_code == 403
@@ -239,7 +239,7 @@ class TestLogin:
         user = make_user()
         user.hashed_password = auth_service.hash_password("pass123")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
-        data = UserLoginDTO(email="test@example.com", password="pass123")
+        data = UserLoginDTO(email="test@example.com", password="pass123")  # NOSONAR
         result = auth_service.login(data)
         assert result.user.email == "test@example.com"
 
@@ -247,7 +247,7 @@ class TestLogin:
         user = make_user(role=UserRole.ADMIN)
         user.hashed_password = auth_service.hash_password("pass123")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
-        data = UserLoginDTO(email="test@example.com", password="pass123")
+        data = UserLoginDTO(email="test@example.com", password="pass123")  # NOSONAR
         result = auth_service.login(data)
         payload = auth_service.decode_token(result.access_token)
         assert payload["role"] == UserRole.ADMIN
@@ -256,16 +256,17 @@ class TestLogin:
         user = make_user()
         user.hashed_password = auth_service.hash_password("pass123")
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
-        data = UserLoginDTO(email="test@example.com", password="")
+        data = UserLoginDTO(email="test@example.com", password="")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.login(data)
         assert exc.value.status_code == 401
 
     def test_login_inactive_403_not_401(self, auth_service):
         user = make_user(is_active=False)
-        user.hashed_password = auth_service.hash_password("pass123")
+        user.hashed_password = auth_service.hash_password("pass123")  # NOSONAR
         auth_service.user_repo.get_by_email = MagicMock(return_value=user)
-        data = UserLoginDTO(email="test@example.com", password="pass123")
+        data = UserLoginDTO(email="test@example.com", password="pass123")  # NOSONAR
         with pytest.raises(HTTPException) as exc:
             auth_service.login(data)
+        assert exc.value.status_code != 401
         assert exc.value.status_code == 403

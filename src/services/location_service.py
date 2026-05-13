@@ -1,5 +1,6 @@
 import os
 import uuid
+import aiofiles
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -8,6 +9,9 @@ from src.repositories.location_repository import LocationRepository
 from src.models.location import LocationCategory
 from src.dto.location_dto import LocationCreateDTO, LocationUpdateDTO, LocationResponseDTO
 from src.config.settings import UPLOAD_DIR, MAX_FILE_SIZE, ALLOWED_IMAGE_TYPES
+
+
+_LOCATION_NOT_FOUND = "Локацію не знайдено"
 
 
 class LocationService:
@@ -21,7 +25,7 @@ class LocationService:
     def get_by_id(self, location_id: int) -> LocationResponseDTO:
         location = self.repo.get_by_id(location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Локацію не знайдено")
+            raise HTTPException(status_code=404, detail=_LOCATION_NOT_FOUND)
         return LocationResponseDTO.from_orm(location)
 
     def create(self, data: LocationCreateDTO) -> LocationResponseDTO:
@@ -31,20 +35,20 @@ class LocationService:
     def update(self, location_id: int, data: LocationUpdateDTO) -> LocationResponseDTO:
         location = self.repo.get_by_id(location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Локацію не знайдено")
+            raise HTTPException(status_code=404, detail=_LOCATION_NOT_FOUND)
         updated = self.repo.update(location, **data.dict(exclude_none=True))
         return LocationResponseDTO.from_orm(updated)
 
     def delete(self, location_id: int) -> None:
         location = self.repo.get_by_id(location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Локацію не знайдено")
+            raise HTTPException(status_code=404, detail=_LOCATION_NOT_FOUND)
         self.repo.delete(location)
 
     async def upload_image(self, location_id: int, file: UploadFile, is_primary: bool = False) -> dict:
         location = self.repo.get_by_id(location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Локацію не знайдено")
+            raise HTTPException(status_code=404, detail=_LOCATION_NOT_FOUND)
 
         if file.content_type not in ALLOWED_IMAGE_TYPES:
             raise HTTPException(status_code=400, detail="Дозволені лише JPEG, PNG, WEBP")
@@ -63,8 +67,8 @@ class LocationService:
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         filepath = os.path.join(UPLOAD_DIR, filename)
 
-        with open(filepath, "wb") as f:
-            f.write(content)
+        async with aiofiles.open(filepath, "wb") as f:
+            await f.write(content)
 
         image_url = f"/uploads/{filename}"
         image = self.repo.add_image(location_id, image_url, is_primary)

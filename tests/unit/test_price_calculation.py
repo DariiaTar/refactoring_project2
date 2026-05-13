@@ -1,7 +1,7 @@
 """Tests for price calculation logic in BookingService."""
 import pytest
 from unittest.mock import MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from src.services.booking_service import BookingService
 from src.models.slot import Slot, SlotStatus
@@ -45,7 +45,7 @@ def make_booking_with_price(price: float):
     b.guest_name = None
     b.guest_email = None
     b.guest_phone = None
-    b.created_at = datetime.utcnow()
+    b.created_at = datetime.now(timezone.utc)
     return b
 
 
