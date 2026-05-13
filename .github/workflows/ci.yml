@@ -40,12 +40,10 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          pytest tests/unit/ -v --tb=short \
-            --cov=src \
-            --cov-report=xml:coverage.xml \
-            --cov-report=html:htmlcov \
-            --cov-report=term-missing \
-            --junitxml=junit.xml
+          python -m coverage run --source=src -m pytest tests/unit/ -v --tb=short --junitxml=junit.xml
+          python -m coverage xml -o coverage.xml
+          python -m coverage html -d htmlcov
+          python -m coverage report --show-missing
         env:
           SECRET_KEY: test-secret-key
 
@@ -166,12 +164,13 @@ jobs:
 
       - name: Run tests and generate coverage for SonarCloud
         run: |
-          pytest tests/unit/ -v \
-            --cov=src \
-            --cov-report=xml:coverage.xml \
-            --junitxml=junit.xml
+          python -m coverage run --source=src -m pytest tests/unit/ -v --junitxml=junit.xml
+          python -m coverage xml -o coverage.xml
         env:
           SECRET_KEY: test-secret-key
+
+      - name: Verify coverage file exists
+        run: ls -la coverage.xml && head -5 coverage.xml
 
       - name: SonarCloud Scan
         env:
@@ -182,7 +181,8 @@ jobs:
           unzip -q sonar-scanner.zip
           ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${SONAR_TOKEN}
+            -Dsonar.token=${SONAR_TOKEN} \
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   # ── 5. Frontend build ────────────────────────────────────────────────────
   test-frontend:
